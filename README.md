@@ -5,17 +5,18 @@ for managing car catalog, inventory, orders, and users.
 
 ## Architecture (High Level)
 
-- API Gateway (single entry point)
-- Car Catalog Service
-- Inventory Service
-- Order Service
-- User Service
+Services:
+- API Gateway – Entry point and routing
+- Car Catalog Service – Car master data
+- Inventory Service – Stock and availability
+- Order Service – Order lifecycle
+- User Service – User identity and roles
 
 All services are independent Spring Boot applications.
 
 ## Technology Stack
 
-- Java 17
+- Java 21
 - Spring Boot
 - Maven
 - REST APIs
