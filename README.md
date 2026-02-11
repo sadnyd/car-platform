@@ -23,16 +23,19 @@ All services are independent Spring Boot applications.
 
 ## Services (To Be Implemented)
 
-- api-gateway
-- car-catalog-service
-- inventory-service
-- order-service
-- user-service
+- api-gateway : 8080
+- car-catalog-service : 8081
+- inventory-service : 8082
+- order-service : 8083
+- user-service : 8084
 
-## How to Run (Placeholder)
+## How to Run
+
+for now we are using powershell and ./mwvn spring-boot:run to run individual services 
+in their respective ports
 
 Each service will be started independently using:
 - Maven
 - Embedded Tomcat
 
-Detailed instructions will be added later.
+
