@@ -37,12 +37,12 @@ spring:
           filters:
             - StripPrefix=1
 
-    compatibility-verifier:
-      enabled: false
 
 logging:
   level:
-    root: INFO
+    org.springframework.cloud.gateway: INFO
+    reactor.netty.http.client: INFO
+    org.springframework.web.reactive.function.client: INFO
 
 management:
   endpoints:
