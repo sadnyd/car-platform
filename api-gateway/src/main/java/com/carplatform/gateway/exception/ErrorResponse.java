@@ -1,4 +1,4 @@
-package com.carplatform.user.exception;
+package com.carplatform.gateway.exception;
 
 import java.time.Instant;
 

@@ -1,6 +1,48 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+
+        - id: car-catalog-route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/cars/**
+          filters:
+            - StripPrefix=1
+
+        - id: inventory-route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/inventory/**
+          filters:
+            - StripPrefix=1
+
+        - id: order-route
+          uri: http://localhost:8083
+          predicates:
+            - Path=/orders/**
+          filters:
+            - StripPrefix=1
+
+        - id: user-route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/users/**
+          filters:
+            - StripPrefix=1
+
+    compatibility-verifier:
+      enabled: false
+
+logging:
+  level:
+    root: INFO
 
 management:
   endpoints:
@@ -10,13 +52,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-logging:
-  level:
-    root: INFO
-    org.springframework.web: WARN
-    org.hibernate: WARN
-
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{service}] %logger{36} - %msg%n"
-

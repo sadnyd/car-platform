@@ -13,7 +13,7 @@ public class PingController {
     @GetMapping("/ping")
     public PingResponse ping() {
 
-        return new PingResponse("user-service", "UP", LocalDateTime.now());
+        return new PingResponse("car-catalog-service", "UP", LocalDateTime.now());
 
     }
 
