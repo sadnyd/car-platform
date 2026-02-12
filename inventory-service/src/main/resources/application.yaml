@@ -5,10 +5,6 @@ spring:
   application:
     name: inventory-service
 
-logging:
-  level:
-    root: INFO
-
 management:
   endpoints:
     web:
@@ -17,3 +13,13 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{service}] %logger{36} - %msg%n"
+
