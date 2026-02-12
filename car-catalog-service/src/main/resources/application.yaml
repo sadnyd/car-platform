@@ -4,3 +4,7 @@ server:
 spring:
   application:
     name: car-catalog-service
+
+logging:
+  level:
+    root: INFO

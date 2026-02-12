@@ -1,13 +1,13 @@
-package com.carplatform.order_service;
+package com.carplatform.inventory;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class OrderServiceApplication {
+public class InventoryServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(OrderServiceApplication.class, args);
+		SpringApplication.run(InventoryServiceApplication.class, args);
 	}
 
 }

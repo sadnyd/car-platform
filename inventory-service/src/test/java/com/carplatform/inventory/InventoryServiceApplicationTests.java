@@ -1,10 +1,10 @@
-package com.carplatform.car_catalog_service;
+package com.carplatform.inventory;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CarCatalogServiceApplicationTests {
+class InventoryServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

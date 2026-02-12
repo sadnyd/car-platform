@@ -1,13 +1,13 @@
-package com.carplatform.inventory_service;
+package com.carplatform.user;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class InventoryServiceApplication {
+public class UserServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(InventoryServiceApplication.class, args);
+		SpringApplication.run(UserServiceApplication.class, args);
 	}
 
 }
