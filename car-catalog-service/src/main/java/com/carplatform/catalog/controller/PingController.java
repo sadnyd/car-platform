@@ -16,4 +16,10 @@ public class PingController {
         return new PingResponse("user-service", "UP", LocalDateTime.now());
 
     }
+
+    @GetMapping("/test-error")
+    public String testError() {
+        throw new RuntimeException("Simulated failure");
+    }
+
 }
