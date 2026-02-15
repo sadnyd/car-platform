@@ -1,28 +1,72 @@
 package com.carplatform.user.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
+import com.carplatform.user.dto.StandardErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
-@RestControllerAdvice
+/**
+ * Global Exception Handler for User Service
+ */
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
-            Exception ex,
-            HttpServletRequest request) {
+    private static final String SERVICE_NAME = "user-service";
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                Instant.now(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "Something went wrong. Please contact support.",
-                request.getRequestURI());
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<StandardErrorResponse> handleValidationError(MethodArgumentNotValidException ex) {
+        List<StandardErrorResponse.FieldError> fieldErrors = new ArrayList<>();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> fieldErrors.add(
+                        new StandardErrorResponse.FieldError(
+                                error.getField(),
+                                error.getDefaultMessage())));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new StandardErrorResponse(
+                        "VALIDATION_ERROR",
+                        "Request validation failed",
+                        Instant.now(),
+                        SERVICE_NAME,
+                        fieldErrors));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<StandardErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new StandardErrorResponse(
+                        "RESOURCE_NOT_FOUND",
+                        ex.getMessage(),
+                        SERVICE_NAME));
+    }
+
+    @ExceptionHandler(BusinessLogicException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<StandardErrorResponse> handleBusinessLogicError(BusinessLogicException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new StandardErrorResponse(
+                        "BUSINESS_LOGIC_ERROR",
+                        ex.getMessage(),
+                        SERVICE_NAME));
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<StandardErrorResponse> handleRuntimeError(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new StandardErrorResponse(
+                        "INTERNAL_SERVER_ERROR",
+                        "An unexpected error occurred: " + ex.getMessage(),
+                        SERVICE_NAME));
     }
 }

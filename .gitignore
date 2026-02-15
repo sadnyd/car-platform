@@ -39,3 +39,10 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+
+# Markdown files (except README.md)
+*.md
+!README.md
+
+# Text files
+*.txt
