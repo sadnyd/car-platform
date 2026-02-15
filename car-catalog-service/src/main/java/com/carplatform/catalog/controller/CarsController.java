@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/cars")
+@RequestMapping("/catalog")
 public class CarsController {
 
     @Autowired
