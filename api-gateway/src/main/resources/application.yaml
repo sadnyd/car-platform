@@ -12,30 +12,30 @@ spring:
         - id: car-catalog-route
           uri: http://localhost:8081
           predicates:
-            - Path=/cars/**
+            - Path=/catalog/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         - id: inventory-route
           uri: http://localhost:8082
           predicates:
             - Path=/inventory/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         - id: order-route
           uri: http://localhost:8083
           predicates:
             - Path=/orders/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         - id: user-route
           uri: http://localhost:8084
           predicates:
             - Path=/users/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
 
 logging:
