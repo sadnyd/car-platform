@@ -1,5 +1,7 @@
 package com.carplatform.gateway.filter;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -28,10 +30,10 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
                 .then(Mono.fromRunnable(() -> {
                     long duration = System.currentTimeMillis() - startTime;
 
-                    int status = exchange.getResponse().getStatusCode() != null
-                            ? exchange.getResponse().getStatusCode().value()
-                            : 0;
-
+                    int status = Optional.ofNullable(exchange.getResponse())
+                            .map(response -> response.getStatusCode())
+                            .map(statusCode -> statusCode.value())
+                            .orElse(0);
                     log.info("Outgoing Response ← {} {} | Status: {} | Time: {} ms",
                             method, path, status, duration);
                 }));
