@@ -6,6 +6,8 @@ import com.carplatform.catalog.dto.SearchCarRequest;
 import com.carplatform.catalog.dto.UpdateCarRequest;
 import com.carplatform.catalog.model.Car;
 import com.carplatform.catalog.model.CarStatus;
+import com.carplatform.catalog.repository.CarRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -13,20 +15,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * In-Memory Implementation of Car Catalog Service
+ * Car Catalog Service - Database-backed implementation
  * 
- * Uses a HashMap to store cars for Phase 3 (no database).
- * This will be replaced with database backend in Phase 4.
+ * Uses Spring Data JPA repository to persist and retrieve cars from PostgreSQL.
  */
 @Service
 public class CatalogServiceImpl implements CatalogService {
 
-    private final Map<UUID, Car> carRepository = new HashMap<>();
+    @Autowired
+    private CarRepository carRepository;
 
     @Override
     public CarResponse createCar(CreateCarRequest request) {
         Car car = new Car(
-                UUID.randomUUID(),
                 request.brand(),
                 request.model(),
                 request.variant(),
@@ -34,105 +35,86 @@ public class CatalogServiceImpl implements CatalogService {
                 request.fuelType(),
                 request.transmissionType(),
                 request.price(),
-                CarStatus.ACTIVE,
-                request.description(),
-                Instant.now());
+                request.description());
 
-        carRepository.put(car.carId(), car);
-        return mapToResponse(car);
+        Car savedCar = carRepository.save(car);
+        return mapToResponse(savedCar);
     }
 
     @Override
     public Optional<CarResponse> getCarById(UUID carId) {
-        return Optional.ofNullable(carRepository.get(carId))
+        return carRepository.findById(carId)
                 .map(this::mapToResponse);
     }
 
     @Override
     public List<CarResponse> listAllCars() {
-        return carRepository.values()
+        return carRepository.findByStatus(CarStatus.ACTIVE)
                 .stream()
-                .filter(car -> car.status() == CarStatus.ACTIVE)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<CarResponse> searchCars(SearchCarRequest request) {
-        return carRepository.values()
-                .stream()
-                .filter(car -> car.status() == CarStatus.ACTIVE)
-                .filter(car -> request.brand() == null || car.brand().equalsIgnoreCase(request.brand()))
-                .filter(car -> request.model() == null || car.model().equalsIgnoreCase(request.model()))
-                .filter(car -> request.fuelType() == null || car.fuelType() == request.fuelType())
+        List<Car> cars = carRepository.findByStatus(CarStatus.ACTIVE);
+        
+        return cars.stream()
+                .filter(car -> request.brand() == null || car.getBrand().equalsIgnoreCase(request.brand()))
+                .filter(car -> request.model() == null || car.getModel().equalsIgnoreCase(request.model()))
+                .filter(car -> request.fuelType() == null || car.getFuelType() == request.fuelType())
                 .filter(car -> request.transmissionType() == null
-                        || car.transmissionType() == request.transmissionType())
-                .filter(car -> request.minPrice() == null || car.price().compareTo(request.minPrice()) >= 0)
-                .filter(car -> request.maxPrice() == null || car.price().compareTo(request.maxPrice()) <= 0)
-                .filter(car -> request.minYear() == null || car.manufacturingYear() >= request.minYear())
+                        || car.getTransmissionType() == request.transmissionType())
+                .filter(car -> request.minPrice() == null || car.getPrice().compareTo(request.minPrice()) >= 0)
+                .filter(car -> request.maxPrice() == null || car.getPrice().compareTo(request.maxPrice()) <= 0)
+                .filter(car -> request.minYear() == null || car.getManufacturingYear() >= request.minYear())
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public CarResponse updateCar(UUID carId, UpdateCarRequest request) {
-        Car car = carRepository.get(carId);
-        if (car == null) {
-            throw new RuntimeException("Car not found: " + carId);
-        }
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new RuntimeException("Car not found: " + carId));
 
-        Car updatedCar = new Car(
-                car.carId(),
-                request.brand() != null ? request.brand() : car.brand(),
-                request.model() != null ? request.model() : car.model(),
-                request.variant() != null ? request.variant() : car.variant(),
-                request.manufacturingYear() != null ? request.manufacturingYear() : car.manufacturingYear(),
-                car.fuelType(),
-                car.transmissionType(),
-                request.price() != null ? request.price() : car.price(),
-                request.status() != null ? request.status() : car.status(),
-                request.description() != null ? request.description() : car.description(),
-                car.createdAt());
+        if (request.brand() != null) car.setBrand(request.brand());
+        if (request.model() != null) car.setModel(request.model());
+        if (request.variant() != null) car.setVariant(request.variant());
+        if (request.manufacturingYear() != null) car.setManufacturingYear(request.manufacturingYear());
+        if (request.price() != null) car.setPrice(request.price());
+        if (request.status() != null) car.setStatus(request.status());
+        if (request.description() != null) car.setDescription(request.description());
+        car.setLastUpdated(Instant.now());
 
-        carRepository.put(carId, updatedCar);
+        Car updatedCar = carRepository.save(car);
         return mapToResponse(updatedCar);
     }
 
     @Override
     public void deleteCar(UUID carId) {
-        Car car = carRepository.get(carId);
-        if (car != null) {
-            Car discontinued = new Car(
-                    car.carId(),
-                    car.brand(),
-                    car.model(),
-                    car.variant(),
-                    car.manufacturingYear(),
-                    car.fuelType(),
-                    car.transmissionType(),
-                    car.price(),
-                    CarStatus.DISCONTINUED,
-                    car.description(),
-                    car.createdAt());
-            carRepository.put(carId, discontinued);
-        }
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new RuntimeException("Car not found: " + carId));
+        
+        car.setStatus(CarStatus.DISCONTINUED);
+        car.setLastUpdated(Instant.now());
+        carRepository.save(car);
     }
 
     /**
-     * Convert Car model to CarResponse DTO
+     * Convert Car entity to CarResponse DTO
      */
     private CarResponse mapToResponse(Car car) {
         return new CarResponse(
-                car.carId(),
-                car.brand(),
-                car.model(),
-                car.variant(),
-                car.manufacturingYear(),
-                car.fuelType(),
-                car.transmissionType(),
-                car.price(),
-                car.status(),
-                car.description(),
-                car.createdAt());
+                car.getCarId(),
+                car.getBrand(),
+                car.getModel(),
+                car.getVariant(),
+                car.getManufacturingYear(),
+                car.getFuelType(),
+                car.getTransmissionType(),
+                car.getPrice(),
+                car.getStatus(),
+                car.getDescription(),
+                car.getCreatedAt());
     }
 }
