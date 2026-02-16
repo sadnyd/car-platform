@@ -61,7 +61,7 @@ public class Order {
      */
     public static Order createNew(UUID carId, UUID userId, BigDecimal price, Instant reservationExpiry) {
         Order order = new Order();
-        order.setOrderId(UUID.randomUUID());
+        // Don't set orderId - let Hibernate/JPA generate it with @GeneratedValue
         order.setCarId(carId);
         order.setUserId(userId);
         order.setPriceAtPurchase(price);

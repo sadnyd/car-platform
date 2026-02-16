@@ -30,7 +30,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public InventoryResponse createInventory(CreateInventoryRequest request) {
         Inventory inventory = new Inventory();
-        inventory.setInventoryId(UUID.randomUUID());
+        // Don't set inventoryId - let Hibernate/JPA generate it with @GeneratedValue
         inventory.setCarId(request.carId());
         inventory.setAvailableUnits(request.availableUnits());
         inventory.setReservedUnits(0);
