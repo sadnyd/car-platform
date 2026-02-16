@@ -38,4 +38,13 @@ logging:
     root: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.carplatform: DEBUG
+
+# Inter-service Communication Configuration
+# Purpose: Centralize service endpoints to avoid hardcoding URLs in business logic
+services:
+  inventory:
+    base-url: http://localhost:8082
+  catalog:
+    base-url: http://localhost:8081
 

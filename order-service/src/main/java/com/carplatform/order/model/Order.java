@@ -37,6 +37,9 @@ public class Order {
     @Column(name = "reservation_expiry")
     private Instant reservationExpiry;
 
+    @Column(name = "inventory_reservation_id")
+    private String inventoryReservationId;
+
     @Column(name = "last_updated", nullable = false)
     private Instant lastUpdated;
 
@@ -158,5 +161,13 @@ public class Order {
 
     public void setLastUpdated(Instant lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public String getInventoryReservationId() {
+        return inventoryReservationId;
+    }
+
+    public void setInventoryReservationId(String inventoryReservationId) {
+        this.inventoryReservationId = inventoryReservationId;
     }
 }

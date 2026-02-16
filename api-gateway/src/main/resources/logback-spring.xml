@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Spring Boot Logback Configuration for Structured JSON Logging -->
+    <!-- STEP 6.11: Structured JSON Logging Configuration -->
+
+    <!-- Import Spring Boot defaults (applies spring.log.file properties) -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Define JSON encoder for structured logs -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/api-gateway.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Daily rollover with max size constraint -->
+            <fileNamePattern>logs/api-gateway-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Custom field additions -->
+            <customFields>{"app":"car-platform-gateway"}</customFields>
+            <!-- Include MDC (trace ID) automatically -->
+            <includeMdcKeyName>correlation_id</includeMdcKeyName>
+        </encoder>
+    </appender>
+
+    <!-- Console appender with pattern (development) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger Configuration -->
+    <!-- Aggregation Service: DEBUG level for detailed tracing -->
+    <logger name="com.carplatform.gateway.service.AggregationService" level="DEBUG"/>
+
+    <!-- Service Clients: INFO level for service calls -->
+    <logger name="com.carplatform.gateway.client" level="INFO"/>
+
+    <!-- Aspect Logging: DEBUG level for detailed AOP logs -->
+    <logger name="com.carplatform.gateway.aspect" level="DEBUG"/>
+
+    <!-- Spring Framework: WARN level (reduce noise) -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.cloud.gateway" level="INFO"/>
+
+    <!-- Reactor/WebFlux: WARN level -->
+    <logger name="reactor" level="WARN"/>
+
+    <!-- Root Logger: INFO level -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="JSON_FILE"/>
+    </root>
+
+    <!-- Spring Profiles: Use different configs for dev/prod -->
+    <springProfile name="dev">
+        <logger name="com.carplatform.gateway" level="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="prod">
+        <logger name="com.carplatform.gateway" level="INFO"/>
+        <!-- Remove console output in production, file only -->
+        <root level="INFO">
+            <appender-ref ref="JSON_FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>

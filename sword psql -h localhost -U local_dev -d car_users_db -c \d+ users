@@ -1,0 +1,16 @@
+                                                       Table "public.users"
+    Column    |            Type             | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+--------------+-----------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ user_id      | uuid                        |           | not null |         | plain    |             |              | 
+ username     | character varying(100)      |           | not null |         | extended |             |              | 
+ email        | character varying(255)      |           | not null |         | extended |             |              | 
+ phone        | character varying(20)       |           |          |         | extended |             |              | 
+ role         | character varying(50)       |           | not null |         | extended |             |              | 
+ active       | boolean                     |           | not null |         | plain    |             |              | 
+ created_at   | timestamp without time zone |           | not null |         | plain    |             |              | 
+ last_updated | timestamp without time zone |           | not null |         | plain    |             |              | 
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (user_id)
+    "users_email_key" UNIQUE CONSTRAINT, btree (email)
+Access method: heap
+

@@ -38,17 +38,82 @@ spring:
             - StripPrefix=0
 
 
+# ========== PHASE 6: AGGREGATION PATTERN CONFIGURATION ==========
+# External Service URLs (for aggregation clients)
+external:
+  services:
+    catalog-url: http://localhost:8081
+    inventory-url: http://localhost:8082
+    order-url: http://localhost:8083
+
+# Resilience4j Configuration (Step 6.6: Timeout & Retry Policy)
+resilience4j:
+  
+  # TIMEOUT CONFIGURATION
+  timelimiter:
+    instances:
+      catalogServiceTimeout:
+        timeout-duration: 5s
+        cancel-running-future: true
+      inventoryServiceTimeout:
+        timeout-duration: 3s
+        cancel-running-future: true
+  
+  # RETRY CONFIGURATION
+  retry:
+    instances:
+      catalogServiceRetry:
+        max-attempts: 1  # No retries for catalog (fast fail preferred)
+        wait-duration: 0ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+      inventoryServiceRetry:
+        max-attempts: 3  # 2 retries after initial attempt
+        wait-duration: 100ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+  
+  # CIRCUIT BREAKER CONFIGURATION
+  circuitbreaker:
+    instances:
+      catalogServiceCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 5s
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 5
+      inventoryServiceCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 3s
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 5
+
+# Logging Configuration (Step 6.11: Observability)
 logging:
   level:
+    root: INFO
     org.springframework.cloud.gateway: INFO
+    com.carplatform.gateway: DEBUG
     reactor.netty.http.client: INFO
     org.springframework.web.reactive.function.client: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
+# Actuator Configuration (observability)
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
