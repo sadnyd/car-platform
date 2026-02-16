@@ -6,6 +6,8 @@ import com.carplatform.inventory.dto.UpdateInventoryRequest;
 import com.carplatform.inventory.dto.ReserveInventoryRequest;
 import com.carplatform.inventory.dto.ReleaseInventoryRequest;
 import com.carplatform.inventory.model.Inventory;
+import com.carplatform.inventory.repository.InventoryRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -13,48 +15,49 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * In-Memory Implementation of Inventory Service
+ * Database-backed Implementation of Inventory Service
  * 
- * Uses a HashMap to store inventory for Phase 3 (no database).
+ * Uses InventoryRepository (Spring Data JPA) to persist inventory in
+ * PostgreSQL.
  * Business Logic: availableUnits + reservedUnits <= total
  */
 @Service
 public class InventoryServiceImpl implements InventoryService {
 
-    private final Map<UUID, Inventory> inventoryRepository = new HashMap<>();
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
     @Override
     public InventoryResponse createInventory(CreateInventoryRequest request) {
-        Inventory inventory = new Inventory(
-                UUID.randomUUID(),
-                request.carId(),
-                request.availableUnits(),
-                0,
-                request.location(),
-                Instant.now());
+        Inventory inventory = new Inventory();
+        inventory.setInventoryId(UUID.randomUUID());
+        inventory.setCarId(request.carId());
+        inventory.setAvailableUnits(request.availableUnits());
+        inventory.setReservedUnits(0);
+        inventory.setLocation(request.location());
+        inventory.setLastUpdated(Instant.now());
 
-        inventoryRepository.put(inventory.inventoryId(), inventory);
-        return mapToResponse(inventory);
+        Inventory savedInventory = inventoryRepository.save(inventory);
+        return mapToResponse(savedInventory);
     }
 
     @Override
     public Optional<InventoryResponse> getInventoryById(UUID inventoryId) {
-        return Optional.ofNullable(inventoryRepository.get(inventoryId))
+        return inventoryRepository.findById(inventoryId)
                 .map(this::mapToResponse);
     }
 
     @Override
     public Optional<InventoryResponse> getInventoryByCarId(UUID carId) {
-        return inventoryRepository.values()
+        return inventoryRepository.findByCarId(carId)
                 .stream()
-                .filter(inv -> inv.carId().equals(carId))
                 .findFirst()
                 .map(this::mapToResponse);
     }
 
     @Override
     public List<InventoryResponse> listAllInventory() {
-        return inventoryRepository.values()
+        return inventoryRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -62,78 +65,59 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public InventoryResponse updateInventory(UUID inventoryId, UpdateInventoryRequest request) {
-        Inventory inventory = inventoryRepository.get(inventoryId);
-        if (inventory == null) {
-            throw new RuntimeException("Inventory not found: " + inventoryId);
-        }
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new RuntimeException("Inventory not found: " + inventoryId));
 
-        Inventory updatedInventory = new Inventory(
-                inventory.inventoryId(),
-                inventory.carId(),
-                request.units(),
-                inventory.reservedUnits(),
-                request.location(),
-                Instant.now());
+        inventory.setAvailableUnits(request.units());
+        inventory.setLocation(request.location());
+        inventory.setLastUpdated(Instant.now());
 
-        inventoryRepository.put(inventoryId, updatedInventory);
+        Inventory updatedInventory = inventoryRepository.save(inventory);
         return mapToResponse(updatedInventory);
     }
 
     @Override
     public InventoryResponse reserveInventory(UUID inventoryId, ReserveInventoryRequest request) {
-        Inventory inventory = inventoryRepository.get(inventoryId);
-        if (inventory == null) {
-            throw new RuntimeException("Inventory not found: " + inventoryId);
-        }
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new RuntimeException("Inventory not found: " + inventoryId));
 
-        if (inventory.availableUnits() < request.units()) {
-            throw new RuntimeException("Insufficient available units. Available: " + inventory.availableUnits() +
+        if (inventory.getAvailableUnits() < request.units()) {
+            throw new RuntimeException("Insufficient available units. Available: " + inventory.getAvailableUnits() +
                     ", Requested: " + request.units());
         }
 
-        Inventory reservedInventory = new Inventory(
-                inventory.inventoryId(),
-                inventory.carId(),
-                inventory.availableUnits() - request.units(),
-                inventory.reservedUnits() + request.units(),
-                inventory.location(),
-                Instant.now());
+        inventory.setAvailableUnits(inventory.getAvailableUnits() - request.units());
+        inventory.setReservedUnits(inventory.getReservedUnits() + request.units());
+        inventory.setLastUpdated(Instant.now());
 
-        inventoryRepository.put(inventoryId, reservedInventory);
+        Inventory reservedInventory = inventoryRepository.save(inventory);
         return mapToResponse(reservedInventory);
     }
 
     @Override
     public InventoryResponse releaseInventory(UUID inventoryId, ReleaseInventoryRequest request) {
-        Inventory inventory = inventoryRepository.get(inventoryId);
-        if (inventory == null) {
-            throw new RuntimeException("Inventory not found: " + inventoryId);
-        }
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new RuntimeException("Inventory not found: " + inventoryId));
 
-        if (inventory.reservedUnits() < request.units()) {
+        if (inventory.getReservedUnits() < request.units()) {
             throw new RuntimeException(
-                    "Cannot release more units than reserved. Reserved: " + inventory.reservedUnits() +
+                    "Cannot release more units than reserved. Reserved: " + inventory.getReservedUnits() +
                             ", Requested: " + request.units());
         }
 
-        Inventory releasedInventory = new Inventory(
-                inventory.inventoryId(),
-                inventory.carId(),
-                inventory.availableUnits() + request.units(),
-                inventory.reservedUnits() - request.units(),
-                inventory.location(),
-                Instant.now());
+        inventory.setAvailableUnits(inventory.getAvailableUnits() + request.units());
+        inventory.setReservedUnits(inventory.getReservedUnits() - request.units());
+        inventory.setLastUpdated(Instant.now());
 
-        inventoryRepository.put(inventoryId, releasedInventory);
+        Inventory releasedInventory = inventoryRepository.save(inventory);
         return mapToResponse(releasedInventory);
     }
 
     @Override
     public boolean isAvailable(UUID carId, int requiredUnits) {
-        return inventoryRepository.values()
+        return inventoryRepository.findByCarId(carId)
                 .stream()
-                .filter(inv -> inv.carId().equals(carId))
-                .anyMatch(inv -> inv.availableUnits() >= requiredUnits);
+                .anyMatch(inv -> inv.getAvailableUnits() >= requiredUnits);
     }
 
     /**
@@ -141,11 +125,11 @@ public class InventoryServiceImpl implements InventoryService {
      */
     private InventoryResponse mapToResponse(Inventory inventory) {
         return new InventoryResponse(
-                inventory.inventoryId(),
-                inventory.carId(),
-                inventory.availableUnits(),
-                inventory.reservedUnits(),
-                inventory.location(),
-                inventory.lastUpdated());
+                inventory.getInventoryId(),
+                inventory.getCarId(),
+                inventory.getAvailableUnits(),
+                inventory.getReservedUnits(),
+                inventory.getLocation(),
+                inventory.getLastUpdated());
     }
 }

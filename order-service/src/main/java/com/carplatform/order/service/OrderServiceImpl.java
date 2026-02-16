@@ -5,6 +5,8 @@ import com.carplatform.order.dto.CreateOrderRequest;
 import com.carplatform.order.dto.UpdateOrderStatusRequest;
 import com.carplatform.order.model.Order;
 import com.carplatform.order.model.OrderStatus;
+import com.carplatform.order.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -12,60 +14,59 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * In-Memory Implementation of Order Service
+ * Database-backed Implementation of Order Service
  * 
- * Uses a HashMap to store orders for Phase 3 (no database).
+ * Uses OrderRepository (Spring Data JPA) to persist orders in PostgreSQL.
  * Manages order lifecycle: CREATED -> CONFIRMED -> PROCESSING ->
  * COMPLETED/CANCELLED
  */
 @Service
 public class OrderServiceImpl implements OrderService {
 
-    private final Map<UUID, Order> orderRepository = new HashMap<>();
+    @Autowired
+    private OrderRepository orderRepository;
 
     @Override
     public OrderResponse createOrder(CreateOrderRequest request) {
         // Calculate reservation expiry based on minutes provided
         Instant reservationExpiry = Instant.now().plusSeconds(request.reservationExpiryMinutes() * 60L);
 
-        // Use placeholder price (will be retrieved from catalog in Phase 4)
+        // Create new order using factory method
         Order order = Order.createNew(
                 request.carId(),
                 request.userId(),
                 java.math.BigDecimal.ZERO,
                 reservationExpiry);
 
-        orderRepository.put(order.orderId(), order);
-        return mapToResponse(order);
+        Order savedOrder = orderRepository.save(order);
+        return mapToResponse(savedOrder);
     }
 
     @Override
     public Optional<OrderResponse> getOrderById(UUID orderId) {
-        return Optional.ofNullable(orderRepository.get(orderId))
+        return orderRepository.findById(orderId)
                 .map(this::mapToResponse);
     }
 
     @Override
     public List<OrderResponse> getOrdersByUserId(UUID userId) {
-        return orderRepository.values()
+        return orderRepository.findByUserId(userId)
                 .stream()
-                .filter(order -> order.userId().equals(userId))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<OrderResponse> getOrdersByCarId(UUID carId) {
-        return orderRepository.values()
+        return orderRepository.findByCarId(carId)
                 .stream()
-                .filter(order -> order.carId().equals(carId))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<OrderResponse> listAllOrders() {
-        return orderRepository.values()
+        return orderRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -73,15 +74,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse updateOrderStatus(UUID orderId, UpdateOrderStatusRequest request) {
-        Order order = orderRepository.get(orderId);
-        if (order == null) {
-            throw new RuntimeException("Order not found: " + orderId);
-        }
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
 
         // Check if order is in a valid state for status change
-        if (order.status() == OrderStatus.COMPLETED || order.status() == OrderStatus.CANCELLED ||
-                order.status() == OrderStatus.FAILED) {
-            throw new RuntimeException("Cannot update status of order in terminal state: " + order.status());
+        if (order.getStatus() == OrderStatus.COMPLETED || order.getStatus() == OrderStatus.CANCELLED ||
+                order.getStatus() == OrderStatus.FAILED) {
+            throw new RuntimeException("Cannot update status of order in terminal state: " + order.getStatus());
         }
 
         // Check if reservation expired before transitioning to PROCESSING
@@ -89,34 +88,32 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Reservation has expired. Cannot proceed to PROCESSING");
         }
 
-        Order updatedOrder = order.withStatus(request.status());
-        orderRepository.put(orderId, updatedOrder);
+        order.setStatus(request.status());
+        order.setLastUpdated(Instant.now());
+        Order updatedOrder = orderRepository.save(order);
         return mapToResponse(updatedOrder);
     }
 
     @Override
     public OrderResponse cancelOrder(UUID orderId) {
-        Order order = orderRepository.get(orderId);
-        if (order == null) {
-            throw new RuntimeException("Order not found: " + orderId);
-        }
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
 
-        if (order.status() != OrderStatus.CREATED && order.status() != OrderStatus.CONFIRMED) {
+        if (order.getStatus() != OrderStatus.CREATED && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new RuntimeException(
-                    "Can only cancel orders in CREATED or CONFIRMED state. Current: " + order.status());
+                    "Can only cancel orders in CREATED or CONFIRMED state. Current: " + order.getStatus());
         }
 
-        Order cancelledOrder = order.withStatus(OrderStatus.CANCELLED);
-        orderRepository.put(orderId, cancelledOrder);
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setLastUpdated(Instant.now());
+        Order cancelledOrder = orderRepository.save(order);
         return mapToResponse(cancelledOrder);
     }
 
     @Override
     public boolean isReservationExpired(UUID orderId) {
-        Order order = orderRepository.get(orderId);
-        if (order == null) {
-            throw new RuntimeException("Order not found: " + orderId);
-        }
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
         return order.isReservationExpired();
     }
 
@@ -125,13 +122,13 @@ public class OrderServiceImpl implements OrderService {
      */
     private OrderResponse mapToResponse(Order order) {
         return new OrderResponse(
-                order.orderId(),
-                order.carId(),
-                order.userId(),
-                order.priceAtPurchase(),
-                order.status(),
-                order.orderDate(),
-                order.reservationExpiry(),
-                order.lastUpdated());
+                order.getOrderId(),
+                order.getCarId(),
+                order.getUserId(),
+                order.getPriceAtPurchase(),
+                order.getStatus(),
+                order.getOrderDate(),
+                order.getReservationExpiry(),
+                order.getLastUpdated());
     }
 }

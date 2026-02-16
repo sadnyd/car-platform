@@ -16,22 +16,22 @@ import java.util.UUID;
  */
 @Repository
 public interface CarRepository extends JpaRepository<Car, UUID> {
-    
+
     /**
      * Find all active cars
      */
     List<Car> findByStatus(CarStatus status);
-    
+
     /**
      * Find cars by brand
      */
     List<Car> findByBrandIgnoreCase(String brand);
-    
+
     /**
      * Find cars by brand and model
      */
     List<Car> findByBrandIgnoreCaseAndModelIgnoreCase(String brand, String model);
-    
+
     /**
      * Find cars within a price range
      */

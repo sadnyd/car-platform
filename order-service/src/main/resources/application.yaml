@@ -5,6 +5,24 @@ spring:
   application:
     name: order-service
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/car_orders_db
+    username: local_dev
+    password: local_dev_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
 management:
   endpoints:
     web:
@@ -18,4 +36,6 @@ management:
 logging:
   level:
     root: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 

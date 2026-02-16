@@ -58,7 +58,7 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public List<CarResponse> searchCars(SearchCarRequest request) {
         List<Car> cars = carRepository.findByStatus(CarStatus.ACTIVE);
-        
+
         return cars.stream()
                 .filter(car -> request.brand() == null || car.getBrand().equalsIgnoreCase(request.brand()))
                 .filter(car -> request.model() == null || car.getModel().equalsIgnoreCase(request.model()))
@@ -77,13 +77,20 @@ public class CatalogServiceImpl implements CatalogService {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new RuntimeException("Car not found: " + carId));
 
-        if (request.brand() != null) car.setBrand(request.brand());
-        if (request.model() != null) car.setModel(request.model());
-        if (request.variant() != null) car.setVariant(request.variant());
-        if (request.manufacturingYear() != null) car.setManufacturingYear(request.manufacturingYear());
-        if (request.price() != null) car.setPrice(request.price());
-        if (request.status() != null) car.setStatus(request.status());
-        if (request.description() != null) car.setDescription(request.description());
+        if (request.brand() != null)
+            car.setBrand(request.brand());
+        if (request.model() != null)
+            car.setModel(request.model());
+        if (request.variant() != null)
+            car.setVariant(request.variant());
+        if (request.manufacturingYear() != null)
+            car.setManufacturingYear(request.manufacturingYear());
+        if (request.price() != null)
+            car.setPrice(request.price());
+        if (request.status() != null)
+            car.setStatus(request.status());
+        if (request.description() != null)
+            car.setDescription(request.description());
         car.setLastUpdated(Instant.now());
 
         Car updatedCar = carRepository.save(car);
@@ -94,7 +101,7 @@ public class CatalogServiceImpl implements CatalogService {
     public void deleteCar(UUID carId) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new RuntimeException("Car not found: " + carId));
-        
+
         car.setStatus(CarStatus.DISCONTINUED);
         car.setLastUpdated(Instant.now());
         carRepository.save(car);
