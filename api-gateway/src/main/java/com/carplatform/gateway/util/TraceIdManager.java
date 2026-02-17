@@ -24,7 +24,10 @@ import java.util.UUID;
 public class TraceIdManager {
 
     private static final String TRACE_ID_HEADER = "X-Trace-Id";
+    private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     private static final String CORRELATION_ID = "correlation_id";
+    private static final String TRACE_ID = "trace_id";
+    private static final String SPAN_ID = "span_id";
 
     /**
      * Initialize trace ID from header or generate new one
@@ -36,8 +39,11 @@ public class TraceIdManager {
         String traceId = traceIdFromRequest != null && !traceIdFromRequest.isEmpty()
                 ? traceIdFromRequest
                 : UUID.randomUUID().toString();
+        String spanId = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
 
         MDC.put(CORRELATION_ID, traceId);
+        MDC.put(TRACE_ID, traceId);
+        MDC.put(SPAN_ID, spanId);
         return traceId;
     }
 
@@ -65,6 +71,8 @@ public class TraceIdManager {
      */
     public static void clear() {
         MDC.remove(CORRELATION_ID);
+        MDC.remove(TRACE_ID);
+        MDC.remove(SPAN_ID);
     }
 
     /**
@@ -83,5 +91,9 @@ public class TraceIdManager {
      */
     public static String getHeaderName() {
         return TRACE_ID_HEADER;
+    }
+
+    public static String getCorrelationHeaderName() {
+        return CORRELATION_ID_HEADER;
     }
 }

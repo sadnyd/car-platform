@@ -43,15 +43,29 @@ public class CorrelationIdGlobalFilter implements GlobalFilter, Ordered {
                 .getHeaders()
                 .getFirst(TraceIdManager.getHeaderName());
 
+        if (traceIdFromHeader == null || traceIdFromHeader.isBlank()) {
+            traceIdFromHeader = exchange.getRequest()
+                .getHeaders()
+                .getFirst(TraceIdManager.getCorrelationHeaderName());
+        }
+
         String traceId = TraceIdManager.initialize(traceIdFromHeader);
 
         log.info("Aggregation Pipeline - Request Start: {} {} [traceId={}]", method, path, traceId);
 
         // Add trace ID to response headers
         exchange.getResponse().getHeaders().add(TraceIdManager.getHeaderName(), traceId);
+        exchange.getResponse().getHeaders().add(TraceIdManager.getCorrelationHeaderName(), traceId);
+
+        ServerWebExchange mutatedExchange = exchange.mutate()
+            .request(exchange.getRequest().mutate()
+                .header(TraceIdManager.getHeaderName(), traceId)
+                .header(TraceIdManager.getCorrelationHeaderName(), traceId)
+                .build())
+            .build();
 
         // Add trace ID to downstream requests (via context)
-        return chain.filter(exchange)
+        return chain.filter(mutatedExchange)
                 .contextWrite(Context.of(TraceIdManager.getKey(), traceId))
                 .doFinally(signalType -> {
                     long duration = System.currentTimeMillis() - startTime;

@@ -59,7 +59,7 @@ public class AggregationService {
 
         // STEP 1: Fetch from Catalog (REQUIRED)
         log.debug("Calling Catalog Service for car: {}", carId);
-        CarResponse carDetails = catalogServiceClient.getCarById(carId);
+        CarResponse carDetails = catalogServiceClient.guardedGetCarById(carId);
 
         if (carDetails == null) {
             log.warn("Car not found in catalog: {}", carId);
@@ -74,7 +74,7 @@ public class AggregationService {
         try {
             log.debug("Calling Inventory Service for car: {}", carId);
             InventoryAvailabilityResponse inventoryResponse = inventoryServiceClient
-                    .checkAvailability(carId.toString());
+                    .guardedCheckAvailability(carId.toString());
 
             if (inventoryResponse != null) {
                 log.debug("Inventory response received: status={}", inventoryResponse.getStatus());
@@ -150,7 +150,7 @@ public class AggregationService {
 
         // STEP 1: Fetch all cars from Catalog
         log.debug("Calling Catalog Service for car listing");
-        List<CarResponse> allCars = catalogServiceClient.listAllCars();
+        List<CarResponse> allCars = catalogServiceClient.guardedListAllCars();
 
         if (allCars == null || allCars.isEmpty()) {
             log.debug("No cars found in catalog");
@@ -227,7 +227,7 @@ public class AggregationService {
         try {
             // Try to fetch availability (with timeout/retry handled by client)
             InventoryAvailabilityResponse invResponse = inventoryServiceClient
-                    .checkAvailability(car.getId().toString());
+                    .guardedCheckAvailability(car.getId().toString());
 
             if (invResponse != null) {
                 if (invResponse.getAvailableUnits() != null && invResponse.getAvailableUnits() > 0) {

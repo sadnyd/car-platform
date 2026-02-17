@@ -7,6 +7,7 @@ import com.carplatform.order.service.OrderService;
 import com.carplatform.order.service.OrderOrchestrationService;
 import com.carplatform.order.service.OrderOrchestrationService.OrderCreationException;
 import com.carplatform.order.exception.ResourceNotFoundException;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,7 @@ public class OrdersController {
      * - 500: Unexpected error
      */
     @PostMapping
+    @Bulkhead(name = "orderWriteBulkhead", type = Bulkhead.Type.SEMAPHORE)
     public ResponseEntity<OrderResponse> createOrder(@RequestBody @Valid CreateOrderRequest request) {
         try {
             log.info("Order creation requested - car: {}, user: {}", request.carId(), request.userId());
@@ -108,6 +110,7 @@ public class OrdersController {
     }
 
     @GetMapping("/{orderId}")
+    @Bulkhead(name = "orderReadBulkhead", type = Bulkhead.Type.SEMAPHORE)
     public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID orderId) {
         return orderService.getOrderById(orderId)
                 .map(ResponseEntity::ok)
@@ -115,16 +118,19 @@ public class OrdersController {
     }
 
     @GetMapping
+    @Bulkhead(name = "orderReadBulkhead", type = Bulkhead.Type.SEMAPHORE)
     public ResponseEntity<List<OrderResponse>> listAll() {
         return ResponseEntity.ok(orderService.listAllOrders());
     }
 
     @GetMapping("/user/{userId}")
+    @Bulkhead(name = "orderReadBulkhead", type = Bulkhead.Type.SEMAPHORE)
     public ResponseEntity<List<OrderResponse>> getUserOrders(@PathVariable UUID userId) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 
     @PutMapping("/{orderId}/status")
+    @Bulkhead(name = "orderWriteBulkhead", type = Bulkhead.Type.SEMAPHORE)
     public ResponseEntity<OrderResponse> updateStatus(
             @PathVariable UUID orderId,
             @RequestBody @Valid UpdateOrderStatusRequest request) {
@@ -132,6 +138,7 @@ public class OrdersController {
     }
 
     @PostMapping("/{orderId}/cancel")
+    @Bulkhead(name = "orderWriteBulkhead", type = Bulkhead.Type.SEMAPHORE)
     public ResponseEntity<OrderResponse> cancelOrder(@PathVariable UUID orderId) {
         return ResponseEntity.ok(orderService.cancelOrder(orderId));
     }

@@ -7,6 +7,8 @@ spring:
 
   cloud:
     gateway:
+      metrics:
+        enabled: true
       routes:
 
         - id: car-catalog-route
@@ -63,13 +65,13 @@ resilience4j:
   retry:
     instances:
       catalogServiceRetry:
-        max-attempts: 1  # No retries for catalog (fast fail preferred)
+        max-attempts: 1
         wait-duration: 0ms
         retry-exceptions:
           - java.io.IOException
           - java.net.SocketTimeoutException
       inventoryServiceRetry:
-        max-attempts: 3  # 2 retries after initial attempt
+        max-attempts: 3
         wait-duration: 100ms
         retry-exceptions:
           - java.io.IOException
@@ -92,6 +94,14 @@ resilience4j:
         slow-call-duration-threshold: 3s
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 5
+  bulkhead:
+    instances:
+      catalogServiceBulkhead:
+        max-concurrent-calls: 30
+        max-wait-duration: 0ms
+      inventoryServiceBulkhead:
+        max-concurrent-calls: 40
+        max-wait-duration: 0ms
 
 # Logging Configuration (Step 6.11: Observability)
 logging:
@@ -109,11 +119,20 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,env,loggers,prometheus
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: ping
+        readiness:
+          include: readinessState,diskSpace
   metrics:
+    tags:
+      application: ${spring.application.name}
     export:
       prometheus:
         enabled: true

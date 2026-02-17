@@ -188,3 +188,20 @@ docker image prune -f
 - **Service unhealthy at startup**: inspect `docker compose logs -f <service>` and ensure DB credentials match `.env`.
 - **DB connection errors**: confirm service `DB_HOST` points to container service name (not `localhost`).
 - **Port conflict on 8080**: free port 8080 or change gateway host mapping in `docker-compose.yml`.
+
+## Phase 10 Observability & Resilience
+
+Phase 10 is implemented with production-style observability and graceful degradation patterns:
+
+- Actuator readiness/liveness groups across all services
+- Custom DB sanity health indicators and order downstream dependency health
+- Standardized correlation-aware logging (`trace-id`, `span-id`, `correlation-id`, `service`)
+- Gateway request logging (method, path, status, latency, trace-id)
+- Business metrics in order flow and downstream latency/error metrics in gateway clients
+- Resilience4j circuit breaker / retry / bulkhead policies for critical read paths
+- Strict finite timeouts to prevent indefinite blocking
+- Failure drill validated (inventory outage -> degraded listing + readiness DOWN in order service)
+
+See full implementation and operational runbook in:
+
+- `PHASE10_OBSERVABILITY_RESILIENCE.md`

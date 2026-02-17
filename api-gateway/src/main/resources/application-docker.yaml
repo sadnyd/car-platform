@@ -36,7 +36,20 @@ external:
     inventory-url: ${INVENTORY_SERVICE_URL:http://inventory-service:8082}
     order-url: ${ORDER_SERVICE_URL:http://order-service:8083}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} service=%X{service:-${spring.application.name}} trace-id=%X{trace_id:-} span-id=%X{span_id:-} correlation-id=%X{correlation_id:-} level=%-5level logger=%logger{36} msg=%msg%n"
   level:
     root: INFO
     org.springframework.cloud.gateway: INFO
