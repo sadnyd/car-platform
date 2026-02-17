@@ -4,10 +4,7 @@ import com.carplatform.gateway.dto.InventoryAvailabilityResponse;
 import com.carplatform.gateway.exception.ResourceNotFoundException;
 import com.carplatform.gateway.exception.ServiceUnavailableException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -32,11 +29,15 @@ import java.time.Duration;
 @Component
 public class InventoryServiceClient {
 
-    @Autowired
-    private WebClient webClient;
+    private final WebClient webClient;
 
-    @Value("${external.services.inventory-url:http://localhost:8082}")
-    private String inventoryServiceUrl;
+    public InventoryServiceClient(
+            WebClient.Builder webClientBuilder,
+            @Value("${external.services.inventory-url:http://localhost:8082}") String inventoryServiceUrl) {
+        this.webClient = webClientBuilder
+                .baseUrl(inventoryServiceUrl)
+                .build();
+    }
 
     // ===================== CHECK AVAILABILITY =====================
 
@@ -64,7 +65,7 @@ public class InventoryServiceClient {
             try {
                 InventoryAvailabilityResponse response = webClient
                         .get()
-                        .uri(inventoryServiceUrl + "/inventory/check-availability/{carId}", carId)
+                        .uri("/inventory/check-availability/{carId}", carId)
                         .retrieve()
                         .onStatus(
                                 status -> status.value() == 404,

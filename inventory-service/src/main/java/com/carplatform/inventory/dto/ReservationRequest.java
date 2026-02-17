@@ -1,11 +1,11 @@
 package com.carplatform.inventory.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+// import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+// import java.time.Instant;
 
 /**
  * Request for inventory reservation endpoint (Phase 5.4)

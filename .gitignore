@@ -46,3 +46,6 @@ Thumbs.db
 
 # Text files
 *.txt
+
+# Local environment secrets
+.env

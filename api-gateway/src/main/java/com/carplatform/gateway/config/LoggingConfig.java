@@ -2,7 +2,7 @@ package com.carplatform.gateway.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+// import org.springframework.web.bind.annotation.ControllerAdvice;
 
 /**
  * Logging Configuration

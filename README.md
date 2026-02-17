@@ -103,3 +103,88 @@ Build / Packaged Mode
 ./mvnw clean package
 java -jar target/<service-name>.jar
 ```
+
+## Phase 9 Dockerization
+
+This repository supports full containerized bring-up of all services and isolated databases with a single command.
+
+### What is implemented
+
+- Multi-stage `Dockerfile` for each service (`api-gateway`, `car-catalog-service`, `inventory-service`, `order-service`, `user-service`)
+- Dedicated Postgres container per service database
+- Internal bridge network for service-to-service DNS resolution
+- `docker` Spring profile (`application-docker.yaml`) for all services
+- Environment-driven DB and downstream service wiring
+- Health checks for DB and all services via `/actuator/health`
+- Gateway-only external port exposure (`8080`)
+
+### Files added for Phase 9
+
+- `docker-compose.yml`
+- `.env.example`
+- `<service>/.dockerignore` for all 5 services
+- `<service>/Dockerfile` for all 5 services
+- `<service>/src/main/resources/application-docker.yaml` for all 5 services
+
+### One-time setup
+
+1. Copy environment template:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` with secure credentials (do not commit).
+
+### Start the full platform
+
+```bash
+docker compose --env-file .env up --build -d
+```
+
+### Validate platform health
+
+```bash
+docker compose --env-file .env ps
+curl http://localhost:8080/actuator/health
+```
+
+### Logs and observability
+
+```bash
+docker compose --env-file .env logs -f api-gateway
+docker compose --env-file .env logs -f order-service
+```
+
+### End-to-end smoke flow via gateway
+
+- Create catalog car: `POST /catalog`
+- Check inventory: `GET /inventory/{carId}`
+- Place order: `POST /orders`
+- Aggregated flow checks through `api-gateway`
+
+### Failure drills (resilience checks)
+
+```bash
+docker compose --env-file .env stop inventory-service
+docker compose --env-file .env start inventory-service
+
+docker compose --env-file .env restart order-db
+docker compose --env-file .env restart order-service
+```
+
+Verify recovery from logs and health endpoints after each drill.
+
+### Shutdown and cleanup
+
+```bash
+docker compose --env-file .env down
+docker compose --env-file .env down -v
+docker image prune -f
+```
+
+### Common Docker issues
+
+- **Service unhealthy at startup**: inspect `docker compose logs -f <service>` and ensure DB credentials match `.env`.
+- **DB connection errors**: confirm service `DB_HOST` points to container service name (not `localhost`).
+- **Port conflict on 8080**: free port 8080 or change gateway host mapping in `docker-compose.yml`.

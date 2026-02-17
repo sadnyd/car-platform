@@ -2,12 +2,9 @@ package com.carplatform.gateway.client;
 
 import com.carplatform.gateway.dto.CarResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.util.List;
@@ -30,11 +27,15 @@ import java.util.UUID;
 @Component
 public class CatalogServiceClient {
 
-    @Autowired
-    private WebClient webClient;
+    private final WebClient webClient;
 
-    @Value("${external.services.catalog-url:http://localhost:8081}")
-    private String catalogServiceUrl;
+    public CatalogServiceClient(
+            WebClient.Builder webClientBuilder,
+            @Value("${external.services.catalog-url:http://localhost:8081}") String catalogServiceUrl) {
+        this.webClient = webClientBuilder
+                .baseUrl(catalogServiceUrl)
+                .build();
+    }
 
     // ===================== GET CAR BY ID =====================
 
@@ -52,7 +53,7 @@ public class CatalogServiceClient {
         try {
             return webClient
                     .get()
-                    .uri(catalogServiceUrl + "/catalog/{id}", carId)
+                    .uri("/catalog/{id}", carId)
                     .retrieve()
                     .bodyToMono(CarResponse.class)
                     .timeout(Duration.ofSeconds(5))
@@ -78,7 +79,7 @@ public class CatalogServiceClient {
         try {
             CarResponse[] carArray = webClient
                     .get()
-                    .uri(catalogServiceUrl + "/catalog")
+                    .uri("/catalog")
                     .retrieve()
                     .bodyToMono(CarResponse[].class)
                     .timeout(Duration.ofSeconds(5))

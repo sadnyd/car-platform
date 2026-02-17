@@ -1,0 +1,45 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: car-catalog-route
+          uri: ${CATALOG_SERVICE_URL:http://car-catalog-service:8081}
+          predicates:
+            - Path=/catalog/**
+          filters:
+            - StripPrefix=0
+
+        - id: inventory-route
+          uri: ${INVENTORY_SERVICE_URL:http://inventory-service:8082}
+          predicates:
+            - Path=/inventory/**
+          filters:
+            - StripPrefix=0
+
+        - id: order-route
+          uri: ${ORDER_SERVICE_URL:http://order-service:8083}
+          predicates:
+            - Path=/orders/**
+          filters:
+            - StripPrefix=0
+
+        - id: user-route
+          uri: ${USER_SERVICE_URL:http://user-service:8084}
+          predicates:
+            - Path=/users/**
+          filters:
+            - StripPrefix=0
+
+external:
+  services:
+    catalog-url: ${CATALOG_SERVICE_URL:http://car-catalog-service:8081}
+    inventory-url: ${INVENTORY_SERVICE_URL:http://inventory-service:8082}
+    order-url: ${ORDER_SERVICE_URL:http://order-service:8083}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: INFO
+    com.carplatform.gateway: INFO
+    reactor.netty.http.client: INFO
+    org.springframework.web.reactive.function.client: INFO

@@ -13,9 +13,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+// import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 
@@ -68,21 +70,18 @@ public class AggregationController {
             @ApiResponse(responseCode = "503", description = "Catalog service unavailable - cannot retrieve car details", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\":\"Service unavailable\",\"service\":\"catalog\",\"message\":\"Catalog service is temporarily unavailable\"}"))),
             @ApiResponse(responseCode = "400", description = "Invalid car ID format (must be valid UUID)")
     })
-    public ResponseEntity<CarDetailsAggregatedResponse> getCarDetails(
+    public Mono<ResponseEntity<CarDetailsAggregatedResponse>> getCarDetails(
             @Parameter(name = "carId", description = "UUID of the car to retrieve", required = true, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") @PathVariable UUID carId) {
 
         log.info("API Request: GET /api/cars/{}/details", carId);
 
-        try {
-            CarDetailsAggregatedResponse response = aggregationService.getCarDetailsWithAvailability(carId);
-
-            log.debug("API Response 200: Car details retrieved for {}", carId);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("API Error for car details: {}", carId, e);
-            throw e;
-        }
+        return Mono.fromCallable(() -> aggregationService.getCarDetailsWithAvailability(carId))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(response -> {
+                    log.debug("API Response 200: Car details retrieved for {}", carId);
+                    return ResponseEntity.ok(response);
+                })
+                .doOnError(e -> log.error("API Error for car details: {}", carId, e));
     }
 
     // ===================== ENDPOINT 2: Car Listing with Availability
@@ -111,7 +110,7 @@ public class AggregationController {
             @ApiResponse(responseCode = "503", description = "Catalog service unavailable - cannot retrieve car list", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\":\"Service unavailable\",\"service\":\"catalog\",\"message\":\"Catalog service is temporarily unavailable\"}"))),
             @ApiResponse(responseCode = "400", description = "Invalid pagination parameters (page < 1 or size < 1 or size > 100)")
     })
-    public ResponseEntity<CarListingAggregatedResponse> getCarListing(
+    public Mono<ResponseEntity<CarListingAggregatedResponse>> getCarListing(
             @Parameter(name = "page", description = "Page number (1-indexed)", example = "1", required = false) @RequestParam(value = "page", defaultValue = "1") int page,
             @Parameter(name = "size", description = "Page size (1-100, default 20)", example = "20", required = false) @RequestParam(value = "size", defaultValue = "20") int size) {
 
@@ -120,23 +119,20 @@ public class AggregationController {
         // Validate pagination
         if (page < 1) {
             log.warn("Invalid page number: {}", page);
-            return ResponseEntity.badRequest().build();
+            return Mono.just(ResponseEntity.badRequest().build());
         }
         if (size < 1 || size > 100) {
             log.warn("Invalid page size: {} (must be 1-100)", size);
-            return ResponseEntity.badRequest().build();
+            return Mono.just(ResponseEntity.badRequest().build());
         }
 
-        try {
-            CarListingAggregatedResponse response = aggregationService.getCarListingWithAvailability(page, size);
-
-            log.debug("API Response 200: Car listing retrieved, {} items", response.getCars().size());
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("API Error for car listing", e);
-            throw e;
-        }
+        return Mono.fromCallable(() -> aggregationService.getCarListingWithAvailability(page, size))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(response -> {
+                    log.debug("API Response 200: Car listing retrieved, {} items", response.getCars().size());
+                    return ResponseEntity.ok(response);
+                })
+                .doOnError(e -> log.error("API Error for car listing", e));
     }
 
     // ===================== HEALTH CHECK =====================
