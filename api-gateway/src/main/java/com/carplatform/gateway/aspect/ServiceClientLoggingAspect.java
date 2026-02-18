@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 /**
  * Service Client Logging Aspect
  *
- * STEP 6.11: Service Call Instrumentation
  *
  * AOP aspect that intercepts all service client calls and logs:
  * - Service name and method being called

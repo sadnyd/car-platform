@@ -26,7 +26,6 @@ import static org.mockito.Mockito.*;
 /**
  * Unit Tests for AggregationService
  * 
- * STEP 6.10: Aggregation Pattern Tests
  * 
  * Tests both happy path and failure scenarios:
  * - Successful aggregation with both services responding

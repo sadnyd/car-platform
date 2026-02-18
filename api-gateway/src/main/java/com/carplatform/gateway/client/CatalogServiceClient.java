@@ -27,7 +27,7 @@ import java.util.UUID;
  * - Retries: None (prefer fast fail)
  * - Circuit Breaker: Enabled
  * 
- * Phase 6: Aggregation Pattern
+ * Aggregation Pattern
  */
 @Slf4j
 @Component
@@ -79,13 +79,15 @@ public class CatalogServiceClient {
                     .timeout(Duration.ofSeconds(3))
                     .block(); // Blocking for synchronous gateway
             if (sample != null) {
-                sample.stop(meterRegistry.timer("carplatform.gateway.downstream.catalog.latency", "operation", "getCarById"));
+                sample.stop(meterRegistry.timer("carplatform.gateway.downstream.catalog.latency", "operation",
+                        "getCarById"));
             }
             return response;
 
         } catch (Exception e) {
             if (meterRegistry != null) {
-                meterRegistry.counter("carplatform.gateway.downstream.catalog.errors", "operation", "getCarById").increment();
+                meterRegistry.counter("carplatform.gateway.downstream.catalog.errors", "operation", "getCarById")
+                        .increment();
             }
             log.error("Error calling Catalog Service for car {}: {}", carId, e.getMessage());
             throw new RuntimeException("Failed to fetch car from catalog", e);
@@ -123,7 +125,8 @@ public class CatalogServiceClient {
                     : java.util.Collections.emptyList();
 
             if (sample != null) {
-                sample.stop(meterRegistry.timer("carplatform.gateway.downstream.catalog.latency", "operation", "listAllCars"));
+                sample.stop(meterRegistry.timer("carplatform.gateway.downstream.catalog.latency", "operation",
+                        "listAllCars"));
             }
 
             log.debug("CatalogServiceClient: Listed {} cars", cars.size());
@@ -131,7 +134,8 @@ public class CatalogServiceClient {
 
         } catch (Exception e) {
             if (meterRegistry != null) {
-                meterRegistry.counter("carplatform.gateway.downstream.catalog.errors", "operation", "listAllCars").increment();
+                meterRegistry.counter("carplatform.gateway.downstream.catalog.errors", "operation", "listAllCars")
+                        .increment();
             }
             log.error("Error calling Catalog Service for listing: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch car listing from catalog", e);

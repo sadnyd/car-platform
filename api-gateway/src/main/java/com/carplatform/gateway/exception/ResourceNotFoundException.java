@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 /**
  * Exception thrown when a requested resource is not found (HTTP 404)
  * 
- * Phase 6: Aggregation Pattern (Step 6.5: Failure Handling)
  * 
  * Used by:
  * - InventoryServiceClient: When car not found in inventory system

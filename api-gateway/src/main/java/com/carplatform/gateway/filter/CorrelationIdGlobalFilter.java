@@ -14,7 +14,6 @@ import reactor.util.context.Context;
 /**
  * Correlation ID Global Filter
  *
- * STEP 6.11: Trace Correlation Filter
  *
  * Global filter for Spring Cloud Gateway that:
  * 1. Extracts trace ID from request header (or generates new one)
@@ -45,8 +44,8 @@ public class CorrelationIdGlobalFilter implements GlobalFilter, Ordered {
 
         if (traceIdFromHeader == null || traceIdFromHeader.isBlank()) {
             traceIdFromHeader = exchange.getRequest()
-                .getHeaders()
-                .getFirst(TraceIdManager.getCorrelationHeaderName());
+                    .getHeaders()
+                    .getFirst(TraceIdManager.getCorrelationHeaderName());
         }
 
         String traceId = TraceIdManager.initialize(traceIdFromHeader);
@@ -58,11 +57,11 @@ public class CorrelationIdGlobalFilter implements GlobalFilter, Ordered {
         exchange.getResponse().getHeaders().add(TraceIdManager.getCorrelationHeaderName(), traceId);
 
         ServerWebExchange mutatedExchange = exchange.mutate()
-            .request(exchange.getRequest().mutate()
-                .header(TraceIdManager.getHeaderName(), traceId)
-                .header(TraceIdManager.getCorrelationHeaderName(), traceId)
-                .build())
-            .build();
+                .request(exchange.getRequest().mutate()
+                        .header(TraceIdManager.getHeaderName(), traceId)
+                        .header(TraceIdManager.getCorrelationHeaderName(), traceId)
+                        .build())
+                .build();
 
         // Add trace ID to downstream requests (via context)
         return chain.filter(mutatedExchange)

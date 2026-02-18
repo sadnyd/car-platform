@@ -10,7 +10,6 @@ import java.util.UUID;
  * Represents a car as returned from the Catalog Service.
  * This is a mapping DTO used internally in the Gateway.
  * 
- * Phase 6: Aggregation Pattern - Service Response Mapping
  */
 public class CarResponse implements Serializable {
 

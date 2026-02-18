@@ -18,7 +18,6 @@ import lombok.Data;
  * This is a GATEWAY-level DTO, not service-specific.
  * Used for client-friendly APIs that aggregate multiple services.
  * 
- * Phase 6: Aggregation Pattern
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)

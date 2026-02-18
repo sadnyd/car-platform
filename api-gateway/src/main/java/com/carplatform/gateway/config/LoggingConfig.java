@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Logging Configuration
  *
- * STEP 6.11: Structured Logging Setup
  *
  * Configures structured JSON logging with trace ID propagation across service
  * calls.

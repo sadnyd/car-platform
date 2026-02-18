@@ -23,9 +23,7 @@ import java.util.stream.Collectors;
  * Orchestrates calls to multiple microservices (Catalog, Inventory)
  * and merges their responses into a single aggregated response for clients.
  * 
- * Implements STEP 6.4-6.5: Aggregation Flow Design & Failure Handling
  * 
- * Phase 6: Aggregation Pattern
  */
 @Slf4j
 @Service
@@ -57,7 +55,6 @@ public class AggregationService {
 
         long startTime = System.currentTimeMillis();
 
-        // STEP 1: Fetch from Catalog (REQUIRED)
         log.debug("Calling Catalog Service for car: {}", carId);
         CarResponse carDetails = catalogServiceClient.guardedGetCarById(carId);
 
@@ -68,7 +65,6 @@ public class AggregationService {
 
         log.debug("Catalog response received: {} {}", carDetails.getMake(), carDetails.getModel());
 
-        // STEP 2: Fetch from Inventory (OPTIONAL, with fallback)
         CarDetailsAggregatedResponse.AvailabilityInfo availability;
         boolean partialResponse = false;
         try {
@@ -100,7 +96,6 @@ public class AggregationService {
             metadata.setAggregationStatus(206);
         }
 
-        // STEP 3: Merge and return
         CarDetailsAggregatedResponse response = CarDetailsAggregatedResponse.builder()
                 .carId(carDetails.getId())
                 .make(carDetails.getMake())
@@ -148,7 +143,6 @@ public class AggregationService {
 
         long startTime = System.currentTimeMillis();
 
-        // STEP 1: Fetch all cars from Catalog
         log.debug("Calling Catalog Service for car listing");
         List<CarResponse> allCars = catalogServiceClient.guardedListAllCars();
 
@@ -159,7 +153,6 @@ public class AggregationService {
 
         log.debug("Catalog returned {} cars", allCars.size());
 
-        // STEP 2: Paginate
         int totalCount = allCars.size();
         int totalPages = (int) Math.ceil((double) totalCount / size);
         int startIndex = (page - 1) * size;
@@ -168,12 +161,10 @@ public class AggregationService {
         List<CarResponse> pageItems = allCars.subList(startIndex, endIndex);
         log.debug("Paginated: {} items on page {} of {}", pageItems.size(), page, totalPages);
 
-        // STEP 3: Fetch availability for each car (with fallback)
         List<CarListingAggregatedResponse.CarListItem> listItems = pageItems.stream()
                 .map(car -> mapToCarListItem(car))
                 .collect(Collectors.toList());
 
-        // STEP 4: Return
         CarListingAggregatedResponse response = new CarListingAggregatedResponse(
                 listItems,
                 totalCount,

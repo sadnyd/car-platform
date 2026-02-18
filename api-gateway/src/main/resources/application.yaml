@@ -11,12 +11,54 @@ spring:
         enabled: true
       routes:
 
+        - id: car-catalog-actuator-route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/catalog/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: inventory-actuator-route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/inventory/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: order-actuator-route
+          uri: http://localhost:8083
+          predicates:
+            - Path=/orders/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: user-actuator-route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/users/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: catalog-ping-route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/catalog/ping
+          filters:
+            - StripPrefix=1
+
         - id: car-catalog-route
           uri: http://localhost:8081
           predicates:
             - Path=/catalog/**
           filters:
             - StripPrefix=0
+
+        - id: inventory-ping-route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/inventory/ping
+          filters:
+            - StripPrefix=1
 
         - id: inventory-route
           uri: http://localhost:8082
@@ -25,12 +67,26 @@ spring:
           filters:
             - StripPrefix=0
 
+        - id: order-ping-route
+          uri: http://localhost:8083
+          predicates:
+            - Path=/orders/ping
+          filters:
+            - StripPrefix=1
+
         - id: order-route
           uri: http://localhost:8083
           predicates:
             - Path=/orders/**
           filters:
             - StripPrefix=0
+
+        - id: user-ping-route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/users/ping
+          filters:
+            - StripPrefix=1
 
         - id: user-route
           uri: http://localhost:8084
@@ -40,7 +96,7 @@ spring:
             - StripPrefix=0
 
 
-# ========== PHASE 6: AGGREGATION PATTERN CONFIGURATION ==========
+# ========== AGGREGATION PATTERN CONFIGURATION ==========
 # External Service URLs (for aggregation clients)
 external:
   services:
@@ -48,7 +104,7 @@ external:
     inventory-url: http://localhost:8082
     order-url: http://localhost:8083
 
-# Resilience4j Configuration (Step 6.6: Timeout & Retry Policy)
+# Resilience4j Configuration (Timeout & Retry Policy)
 resilience4j:
   
   # TIMEOUT CONFIGURATION
@@ -103,7 +159,7 @@ resilience4j:
         max-concurrent-calls: 40
         max-wait-duration: 0ms
 
-# Logging Configuration (Step 6.11: Observability)
+# Logging Configuration (Observability)
 logging:
   level:
     root: INFO

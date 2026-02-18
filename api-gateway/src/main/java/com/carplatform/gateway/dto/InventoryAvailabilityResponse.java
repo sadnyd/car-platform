@@ -11,7 +11,6 @@ import java.util.UUID;
  * Service.
  * This is a mapping DTO used internally in the Gateway during aggregation.
  * 
- * Phase 6: Aggregation Pattern - Service Response Mapping
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class InventoryAvailabilityResponse implements Serializable {

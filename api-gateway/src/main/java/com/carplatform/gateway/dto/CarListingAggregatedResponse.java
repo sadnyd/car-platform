@@ -18,7 +18,6 @@ import java.util.UUID;
  * Used for client-friendly car listing APIs.
  * Includes pagination metadata.
  * 
- * Phase 6: Aggregation Pattern
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CarListingAggregatedResponse implements Serializable {

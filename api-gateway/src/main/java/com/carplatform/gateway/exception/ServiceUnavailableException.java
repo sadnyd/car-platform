@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 /**
  * Exception thrown when a downstream service is unavailable (HTTP 503)
  * 
- * Phase 6: Aggregation Pattern (Step 6.5: Failure Handling)
  * 
  * Used by:
  * - InventoryServiceClient: When inventory service cannot be reached

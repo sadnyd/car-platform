@@ -26,7 +26,6 @@ import static org.mockito.Mockito.*;
 /**
  * Integration Tests for AggregationController
  * 
- * STEP 6.10: Aggregation Pattern Integration Tests
  * 
  * Tests REST endpoints with:
  * - Valid requests
@@ -82,7 +81,7 @@ class AggregationControllerIntegrationTest {
         // ===================== CAR DETAILS ENDPOINT TESTS =====================
 
         @Test
-        @DisplayName("GET /api/cars/{carId}/details should return 200 with aggregated data")
+        @DisplayName("GET /cars/{carId}/details should return 200 with aggregated data")
         void testGetCarDetails_Success() {
                 // GIVEN: AggregationService returns valid response
                 when(aggregationService.getCarDetailsWithAvailability(testCarId))
@@ -90,7 +89,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Call endpoint and verify response
                 webTestClient.get()
-                                .uri("/api/cars/{carId}/details", testCarId)
+                                .uri("/cars/{carId}/details", testCarId)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isOk()
@@ -109,7 +108,7 @@ class AggregationControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("GET /api/cars/{carId}/details should return 404 when car not found")
+        @DisplayName("GET /cars/{carId}/details should return 404 when car not found")
         void testGetCarDetails_NotFound() {
                 // GIVEN: Service throws ResourceNotFoundException
                 when(aggregationService.getCarDetailsWithAvailability(testCarId))
@@ -117,14 +116,14 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Call endpoint and verify 404 response
                 webTestClient.get()
-                                .uri("/api/cars/{carId}/details", testCarId)
+                                .uri("/cars/{carId}/details", testCarId)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isNotFound();
         }
 
         @Test
-        @DisplayName("GET /api/cars/{carId}/details should return 206 when inventory unavailable")
+        @DisplayName("GET /cars/{carId}/details should return 206 when inventory unavailable")
         void testGetCarDetails_PartialContent() {
                 // GIVEN: Service returns degraded response (inventory unavailable)
                 CarDetailsAggregatedResponse degradedResponse = new CarDetailsAggregatedResponse(
@@ -141,7 +140,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Call endpoint
                 webTestClient.get()
-                                .uri("/api/cars/{carId}/details", testCarId)
+                                .uri("/cars/{carId}/details", testCarId)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isOk() // Still 200 with degraded data
@@ -153,7 +152,7 @@ class AggregationControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("GET /api/cars/{carId}/details should return 503 on catalog service failure")
+        @DisplayName("GET /cars/{carId}/details should return 503 on catalog service failure")
         void testGetCarDetails_ServiceUnavailable() {
                 // GIVEN: Service throws ServiceUnavailableException
                 when(aggregationService.getCarDetailsWithAvailability(testCarId))
@@ -161,7 +160,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Call endpoint and verify 503 response
                 webTestClient.get()
-                                .uri("/api/cars/{carId}/details", testCarId)
+                                .uri("/cars/{carId}/details", testCarId)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
@@ -170,7 +169,7 @@ class AggregationControllerIntegrationTest {
         // ===================== CAR LISTING ENDPOINT TESTS =====================
 
         @Test
-        @DisplayName("GET /api/cars/listing should return 200 with paginated data")
+        @DisplayName("GET /cars/listing should return 200 with paginated data")
         void testGetCarListing_Success() {
                 // GIVEN: AggregationService returns valid listing
                 when(aggregationService.getCarListingWithAvailability(1, 20))
@@ -178,7 +177,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Call endpoint and verify response
                 webTestClient.get()
-                                .uri("/api/cars/listing?page=1&size=20")
+                                .uri("/cars/listing?page=1&size=20")
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isOk()
@@ -196,7 +195,7 @@ class AggregationControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("GET /api/cars/listing should use default pagination if not provided")
+        @DisplayName("GET /cars/listing should use default pagination if not provided")
         void testGetCarListing_DefaultPagination() {
                 // GIVEN: Service configured to return default page
                 when(aggregationService.getCarListingWithAvailability(1, 50))
@@ -204,7 +203,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Call endpoint without pagination params
                 webTestClient.get()
-                                .uri("/api/cars/listing")
+                                .uri("/cars/listing")
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isOk();
@@ -214,29 +213,29 @@ class AggregationControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("GET /api/cars/listing should return 400 for invalid page number")
+        @DisplayName("GET /cars/listing should return 400 for invalid page number")
         void testGetCarListing_InvalidPageNumber() {
                 // WHEN & THEN: Call endpoint with invalid page number (0 or negative)
                 webTestClient.get()
-                                .uri("/api/cars/listing?page=0&size=20")
+                                .uri("/cars/listing?page=0&size=20")
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isBadRequest(); // Should validate input
         }
 
         @Test
-        @DisplayName("GET /api/cars/listing should return 400 for invalid page size")
+        @DisplayName("GET /cars/listing should return 400 for invalid page size")
         void testGetCarListing_InvalidPageSize() {
                 // WHEN & THEN: Call endpoint with invalid size (0 or larger than max)
                 webTestClient.get()
-                                .uri("/api/cars/listing?page=1&size=0")
+                                .uri("/cars/listing?page=1&size=0")
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isBadRequest();
         }
 
         @Test
-        @DisplayName("GET /api/cars/listing should return 503 on catalog service failure")
+        @DisplayName("GET /cars/listing should return 503 on catalog service failure")
         void testGetCarListing_CatalogServiceDown() {
                 // GIVEN: Service throws ServiceUnavailableException
                 when(aggregationService.getCarListingWithAvailability(any(), any()))
@@ -244,7 +243,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Call endpoint and verify 503 response
                 webTestClient.get()
-                                .uri("/api/cars/listing?page=1&size=20")
+                                .uri("/cars/listing?page=1&size=20")
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
@@ -253,11 +252,11 @@ class AggregationControllerIntegrationTest {
         // ===================== HEALTH CHECK ENDPOINT TESTS =====================
 
         @Test
-        @DisplayName("GET /api/cars/aggregation/health should return 200 when healthy")
+        @DisplayName("GET /cars/aggregation/health should return 200 when healthy")
         void testHealthCheck_Success() {
                 // WHEN & THEN: Call health endpoint
                 webTestClient.get()
-                                .uri("/api/cars/aggregation/health")
+                                .uri("/cars/aggregation/health")
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isOk()
@@ -277,7 +276,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Verify metadata is present
                 webTestClient.get()
-                                .uri("/api/cars/{carId}/details", testCarId)
+                                .uri("/cars/{carId}/details", testCarId)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isOk()
@@ -297,7 +296,7 @@ class AggregationControllerIntegrationTest {
 
                 // WHEN & THEN: Verify pagination data
                 webTestClient.get()
-                                .uri("/api/cars/listing?page=1&size=20")
+                                .uri("/cars/listing?page=1&size=20")
                                 .accept(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isOk()

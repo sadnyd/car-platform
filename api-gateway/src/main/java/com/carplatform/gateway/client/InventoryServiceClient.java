@@ -30,7 +30,6 @@ import java.time.Duration;
  * - Circuit Breaker: Enabled
  * - Fallback: Graceful degradation on failure
  * 
- * Phase 6: Aggregation Pattern (Step 6.5: Failure HandlingStrategy)
  */
 @Slf4j
 @Component
@@ -64,7 +63,6 @@ public class InventoryServiceClient {
     /**
      * Check availability for a car
      * 
-     * Implements STEP 6.5: Failure Handling
      * - Retries 2 times on timeout/connection errors
      * - Returns null on success with complete retries
      * 
@@ -90,12 +88,15 @@ public class InventoryServiceClient {
                     .block();
 
             if (sample != null) {
-                sample.stop(meterRegistry.timer("carplatform.gateway.downstream.inventory.latency", "operation", "checkAvailability"));
+                sample.stop(meterRegistry.timer("carplatform.gateway.downstream.inventory.latency", "operation",
+                        "checkAvailability"));
             }
             return response;
         } catch (WebClientResponseException exception) {
             if (meterRegistry != null) {
-                meterRegistry.counter("carplatform.gateway.downstream.inventory.errors", "operation", "checkAvailability").increment();
+                meterRegistry
+                        .counter("carplatform.gateway.downstream.inventory.errors", "operation", "checkAvailability")
+                        .increment();
             }
             if (exception.getStatusCode().value() == 404) {
                 throw new ResourceNotFoundException("Car not found in inventory: " + carId);
@@ -103,7 +104,9 @@ public class InventoryServiceClient {
             throw new ServiceUnavailableException("Inventory service temporarily unavailable", exception);
         } catch (Exception exception) {
             if (meterRegistry != null) {
-                meterRegistry.counter("carplatform.gateway.downstream.inventory.errors", "operation", "checkAvailability").increment();
+                meterRegistry
+                        .counter("carplatform.gateway.downstream.inventory.errors", "operation", "checkAvailability")
+                        .increment();
             }
             throw new ServiceUnavailableException("Inventory service temporarily unavailable", exception);
         }

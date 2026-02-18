@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <!-- Spring Boot Logback Configuration for Structured JSON Logging -->
-    <!-- STEP 6.11: Structured JSON Logging Configuration -->
 
     <!-- Import Spring Boot defaults (applies spring.log.file properties) -->
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
