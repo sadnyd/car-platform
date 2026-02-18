@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * User domain model representing a car platform customer or admin.
  * JPA-managed entity for persistence.
- * Minimal fields for Phase 4 - security-adjacent design.
+ * Minimal fields - security-adjacent design.
  */
 @Entity
 @Table(name = "users", uniqueConstraints = {

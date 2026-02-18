@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Repository for User entity persistence operations.
  * Extends JpaRepository to provide CRUD and query capabilities.
- * Minimal scope for Phase 4 - only identity queries, no authentication.
+ * Minimal scope for - only identity queries, no authentication.
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {

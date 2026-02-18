@@ -7,7 +7,6 @@ package com.carplatform.order.model;
  * └─→ INVENTORY_RESERVED (after successful inventory check & reservation)
  * └─→ CONFIRMED (after cart details fetched, ready for payment)
  * └─→ PROCESSING (payment processed)
- * └─→ COMPLETED (all steps done)
  * 
  * Any state → CANCELLED (user cancels)
  * Any state → FAILED (system error during processing)

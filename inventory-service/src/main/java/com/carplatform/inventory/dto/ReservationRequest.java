@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 // import java.time.Instant;
 
 /**
- * Request for inventory reservation endpoint (Phase 5.4)
  * 
  * Used by: Order Service (inter-service call)
  * Endpoint: POST /inventory/reserve

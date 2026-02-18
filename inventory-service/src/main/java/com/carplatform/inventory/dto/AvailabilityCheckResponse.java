@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Response for availability check endpoint (Phase 5.3)
  * 
  * Used by: Order Service (inter-service call)
  * Endpoint: GET /inventory/check-availability/{carId}

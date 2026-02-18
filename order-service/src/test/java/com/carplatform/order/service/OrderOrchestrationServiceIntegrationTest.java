@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * PHASE 5.10: Integration Tests for Order Orchestration
+ * Integration Tests for Order Orchestration
  * 
  * Tests inter-service communication flows:
  * - Order creation with inventory validation
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 @Slf4j
 @SpringBootTest
 @ActiveProfiles("test")
-@DisplayName("Phase 5.10: Order Orchestration Integration Tests")
+@DisplayName("Order Orchestration Integration Tests")
 public class OrderOrchestrationServiceIntegrationTest {
 
         @Autowired

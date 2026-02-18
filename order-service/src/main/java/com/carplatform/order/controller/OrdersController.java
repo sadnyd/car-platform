@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * Orders REST Controller
  * 
- * PHASE 5 Changes:
+ * Changes:
  * - POST /orders now uses OrderOrchestrationService
  * - Validates inventory before creating order
  * - Returns different error codes based on failure type
@@ -38,13 +38,12 @@ public class OrdersController {
     private OrderOrchestrationService orchestrationService;
 
     /**
-     * Create order with inventory validation (PHASE 5)
+     * Create order with inventory validation
      * 
      * Workflow:
      * 1. Check inventory availability
      * 2. Reserve inventory
      * 3. Fetch car details
-     * 4. Create order (if all previous steps succeed)
      * 
      * Response codes:
      * - 201: Order created successfully (INVENTORY_RESERVED status)

@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Response for inventory reservation endpoint (Phase 5.4)
  * 
  * Used by: Order Service (inter-service call)
  * Endpoint: POST /inventory/reserve

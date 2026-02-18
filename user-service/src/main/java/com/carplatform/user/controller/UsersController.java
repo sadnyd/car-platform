@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * REST Controller for User Management APIs (Phase 4 - Minimal Scope)
+ * REST Controller for User Management APIs (Minimal Scope)
  * 
  * Limited endpoints for identity and roles, no authentication.
  * Exposes only: POST /users (create) and GET /users/{userId} (retrieve)

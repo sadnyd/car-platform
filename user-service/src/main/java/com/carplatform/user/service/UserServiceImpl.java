@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * Database-backed Implementation of User Service
  * 
  * Uses UserRepository (Spring Data JPA) to persist users in PostgreSQL.
- * Minimal scope for Phase 4 - identity and roles, no authentication.
+ * Minimal scope - identity and roles, no authentication.
  */
 @Service
 public class UserServiceImpl implements UserService {

@@ -25,7 +25,7 @@ import java.time.Instant;
 // import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Order Orchestration Service - PHASE 5
+ * Order Orchestration Service
  * 
  * Orchestrates inter-service communication for order creation:
  * 1. Check inventory availability via Inventory Service
@@ -33,7 +33,7 @@ import java.time.Instant;
  * 3. Fetch car details from Catalog Service
  * 4. Create order with INVENTORY_RESERVED status
  * 
- * PHASE 5.6 - Transaction Boundaries:
+ * Transaction Boundaries:
  * 
  * KEY PRINCIPLE: No @Transactional across service calls
  * 
@@ -48,16 +48,15 @@ import java.time.Instant;
  * - Order Service does NOT assume Inventory commit
  * - If Inventory fails, Order is NOT created
  * - If Catalog fails, Order is still created (best effort for pricing)
- * - NO distributed 2-phase commit (would be complex & slow)
  * - NO assumption that Inventory will rollback if Order fails
  * 
  * Compensating Actions (Not yet implemented):
  * - If Order creation fails after reservation, we need to release inventory
- * - This would be async via events (Phase 5.X - Event-driven)
+ * - This would be async via events
  * - For now, manual cleanup or TTL expiry handles this
  * 
- * Uses WebClient for non-blocking async calls (future Phase 5.12)
- * Currently using blocking calls for Phase 5.5 (can be made reactive later)
+ * Uses WebClient for non-blocking async calls
+ * Currently using blocking calls (can be made reactive later)
  */
 @Slf4j
 @Service
@@ -72,34 +71,34 @@ public class OrderOrchestrationService {
     @Autowired
     private OrderRepository orderRepository;
 
-        @Autowired
-        private MeterRegistry meterRegistry;
+    @Autowired
+    private MeterRegistry meterRegistry;
 
-        private Counter ordersCreatedCounter;
-        private Counter ordersFailedCounter;
-        private Counter inventoryReservationFailureCounter;
-        private Timer catalogLookupLatencyTimer;
+    private Counter ordersCreatedCounter;
+    private Counter ordersFailedCounter;
+    private Counter inventoryReservationFailureCounter;
+    private Timer catalogLookupLatencyTimer;
 
-        @jakarta.annotation.PostConstruct
-        public void initMetrics() {
+    @jakarta.annotation.PostConstruct
+    public void initMetrics() {
         ordersCreatedCounter = Counter.builder("carplatform.orders.created.count")
-            .description("Total successful orders created")
-            .register(meterRegistry);
+                .description("Total successful orders created")
+                .register(meterRegistry);
         ordersFailedCounter = Counter.builder("carplatform.orders.failed.count")
-            .description("Total failed order creation attempts")
-            .register(meterRegistry);
+                .description("Total failed order creation attempts")
+                .register(meterRegistry);
         inventoryReservationFailureCounter = Counter.builder("carplatform.inventory.reservation.failures.count")
-            .description("Inventory reservation failures during order creation")
-            .register(meterRegistry);
+                .description("Inventory reservation failures during order creation")
+                .register(meterRegistry);
         catalogLookupLatencyTimer = Timer.builder("carplatform.catalog.lookup.latency")
-            .description("Latency for catalog lookup in order flow")
-            .register(meterRegistry);
-        }
+                .description("Latency for catalog lookup in order flow")
+                .register(meterRegistry);
+    }
 
     /**
      * Create order with inventory validation and reservation
      * 
-     * PHASE 5.6 Note:
+     * Note:
      * - This method is marked @Transactional to ensure Order creation is atomic
      * - But external service calls have their own independent transactions
      * - If external call fails, we don't create the order
@@ -109,11 +108,9 @@ public class OrderOrchestrationService {
      * Workflow:
      * 1. Check inventory availability
      * - If not available → Return error, don't create order
-     * - If available → Proceed to step 2
      * 
      * 2. Reserve inventory
      * - If reservation fails → Return error, don't create order
-     * - If successful → Proceed to step 3
      * 
      * 3. Fetch car details
      * - If catalog unreachable → Log warning, continue (best effort)
@@ -121,13 +118,10 @@ public class OrderOrchestrationService {
      * 
      * 4. Create order
      * - Status: INVENTORY_RESERVED
-     * - Store reservation ID from step 2
-     * - Store car price from step 3
      * 
      * @param request CreateOrderRequest with carId, userId,
      *                reservationExpiryMinutes
      * @return OrderResponse with INVENTORY_RESERVED status
-     * @throws Exception if any critical step fails
      */
     @Transactional
     public OrderResponse createOrderWithInventoryValidation(CreateOrderRequest request) {
@@ -135,11 +129,10 @@ public class OrderOrchestrationService {
 
         String carId = request.carId().toString();
 
-        // Step 1: Check availability (INDEPENDENT TX - Inventory Service)
         log.debug("Step 1: Checking inventory availability for car {}", carId);
         InventoryAvailabilityResponse availabilityResponse = inventoryServiceClient
-            .guardedCheckAvailability(carId)
-                .block(); // WARNING: blocking call (Phase 5.12 will make this reactive)
+                .guardedCheckAvailability(carId)
+                .block(); // WARNING: blocking call
 
         if (availabilityResponse == null || !availabilityResponse.isAvailable()) {
             log.warn("Inventory not available for car: {}", carId);
@@ -151,7 +144,6 @@ public class OrderOrchestrationService {
         log.info("Inventory available - car: {}, available units: {}",
                 carId, availabilityResponse.getAvailableUnits());
 
-        // Step 2: Reserve inventory (INDEPENDENT TX - Inventory Service)
         log.debug("Step 2: Reserving inventory for car {}", carId);
 
         String tempOrderId = "temp-" + request.userId().toString(); // Temporary ID for reservation
@@ -162,8 +154,8 @@ public class OrderOrchestrationService {
         );
 
         InventoryReservationResponse reservationResponse = inventoryServiceClient
-            .guardedReserveInventory(reservationRequest)
-                .block(); // WARNING: blocking call (Phase 5.12 will make this reactive)
+                .guardedReserveInventory(reservationRequest)
+                .block(); // WARNING: blocking call
 
         if (reservationResponse == null || reservationResponse.getErrorCode() != null) {
             log.error("Failed to reserve inventory - car: {}, error: {}",
@@ -177,14 +169,13 @@ public class OrderOrchestrationService {
         log.info("Inventory reserved - reservation ID: {}, units remaining: {}",
                 reservationResponse.getReservationId(), reservationResponse.getUnitsRemaining());
 
-        // Step 3: Fetch car details (INDEPENDENT TX - Catalog Service, best effort)
         log.debug("Step 3: Fetching car details from catalog");
         BigDecimal carPrice = BigDecimal.valueOf(0); // Default price
         Timer.Sample lookupSample = Timer.start(meterRegistry);
 
         try {
             CarDetailsResponse carDetails = catalogServiceClient
-                .guardedGetCarDetails(carId)
+                    .guardedGetCarDetails(carId)
                     .block(); // WARNING: blocking call
 
             if (carDetails != null && carDetails.getPrice() > 0) {
@@ -200,7 +191,6 @@ public class OrderOrchestrationService {
             lookupSample.stop(catalogLookupLatencyTimer);
         }
 
-        // Step 4: Create order (LOCAL TX - Order Service)
         log.debug("Step 4: Creating order in database");
         Instant reservationExpiry = Instant.now().plusSeconds(
                 request.reservationExpiryMinutes() * 60L);
